@@ -92,9 +92,8 @@ def pgn_to_np_array(pgn):
         board.append(row)
     return np.array(board)
 
-
-def pgn_to_dc_vector(png):
-    """Converts a pgn string to a dummy-coded vector of size 1 x 832 (64x13)
+def pgn_to_dc_list(pgn):
+    """Converts a pgn string to a list of size 64 of list of size 13. 
     Dictionary:
         Empty: 0
         WPawn: 1
@@ -111,13 +110,14 @@ def pgn_to_dc_vector(png):
         BKing: -6
     """
     vector = []
-    for s in png.split('-'):
+    for s in pgn.split('-'):
         for ch in s:
             if ch in piece_to_num_dict.keys():
-                vector += piece_to_list[ch]
+                vector.append(piece_to_list[ch])
             else:
-                vector += ([0]*6 + [1] + [0]*6)*int(ch)
-    return np.array(vector).reshape(1, 832)
+                for _ in range(int(ch)):
+                    vector.append([0]*6 + [1] + [0]*6)
+    return vector
 
 
 def dc_vector_to_np_array(vector):
@@ -145,9 +145,10 @@ def get_X(fpaths):
 def get_Y(fpaths):
     """Generates a numpy vector of size len(fpaths) x 832. 
     """
-    y_array = np.array([], dtype=np.float32).reshape((0, 832))
+    y_array = [np.array([], dtype=np.float32).reshape(0, 13)]*64
     for f in fpaths:
         pgn = fpath_to_pgn(f)
-        vec = pgn_to_dc_vector(pgn)
-        y_array = np.append(y_array, vec, axis=0)
+        vec = pgn_to_dc_list(pgn)
+        vec = [np.array(i).reshape(1, 13) for i in vec]
+        y_array = [np.append(item, vec[i], axis=0) for i, item in enumerate(y_array)]
     return y_array
